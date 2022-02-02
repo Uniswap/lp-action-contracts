@@ -1,3 +1,6 @@
 [submodule "/Users/noah/github/lp-action-contracts/lib/ds-test"]
 	path = /Users/noah/github/lp-action-contracts/lib/ds-test
 	url = https://github.com/dapphub/ds-test
+[submodule "/Users/noah/github/lp-action-contracts/lib/v3-periphery"]
+	path = /Users/noah/github/lp-action-contracts/lib/v3-periphery
+	url = https://github.com/Uniswap/v3-periphery

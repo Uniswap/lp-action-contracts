@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "lint": "prettier --check 'src/**/*.sol'"
+  },
   "devDependencies": {
     "prettier": "^2.5.1",
     "prettier-plugin-solidity": "^1.0.0-beta.19"

@@ -1,82 +1,86 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import 'ds-test/test.sol';
 
 import '../libraries/RemoveAndSwapDecoder.sol';
 
-interface Cheats {
-  function expectRevert(bytes calldata) external;
-}
-
 contract Decoder {
-  function decode(bytes calldata data)
-    external
-    pure
-    returns (RemoveAndSwapDecoder.Params memory)
-  {
-    return RemoveAndSwapDecoder.decode(data);
-  }
+    using RemoveAndSwapDecoder for bytes;
+
+    function decode(bytes calldata data) external pure returns (RemoveAndSwapDecoder.Params memory) {
+        return data.decode();
+    }
 }
 
 contract RemoveAndSwapDecoderTest is DSTest {
-  Cheats cheats = Cheats(HEVM_ADDRESS);
+    Decoder decoder;
 
-  Decoder decoder;
+    function setUp() public {
+        decoder = new Decoder();
+    }
 
-  function setUp() public {
-    decoder = new Decoder();
-  }
+    function testDecode() public {
+        uint256 deadline = 1;
+        address recipient = address(1);
+        uint256 amount0Min = 1;
+        uint256 amount1Min = 1;
+        bool swapToken0 = true;
+        RemoveAndSwapDecoder.V2ExactInput[] memory v2ExactInputs = new RemoveAndSwapDecoder.V2ExactInput[](1);
+        IERC20[] memory path = new IERC20[](1);
+        path[0] = IERC20(address(1));
+        v2ExactInputs[0] = RemoveAndSwapDecoder.V2ExactInput({
+            amountInBips: 1,
+            amountOutMin: 1,
+            path: path,
+            to: address(1)
+        });
+        RemoveAndSwapDecoder.V3ExactInputSingle[]
+            memory v3ExactInputSingles = new RemoveAndSwapDecoder.V3ExactInputSingle[](1);
+        v3ExactInputSingles[0] = RemoveAndSwapDecoder.V3ExactInputSingle({
+            tokenIn: IERC20(address(1)),
+            tokenOut: IERC20(address(1)),
+            fee: 1,
+            recipient: address(1),
+            amountInBips: 1,
+            amountOutMinimum: 1
+        });
+        RemoveAndSwapDecoder.V3ExactInput[] memory v3ExactInputs = new RemoveAndSwapDecoder.V3ExactInput[](1);
+        v3ExactInputs[0] = RemoveAndSwapDecoder.V3ExactInput({
+            path: hex'01',
+            recipient: address(1),
+            amountInBips: 1,
+            amountOutMinimum: 1
+        });
+        bytes[] memory otherCalls = new bytes[](1);
+        otherCalls[0] = hex'01';
 
-  bytes data;
+        bytes memory data = abi.encode(
+            RemoveAndSwapDecoder.Params({
+                deadline: deadline,
+                recipient: recipient,
+                amount0Min: amount0Min,
+                amount1Min: amount1Min,
+                swapToken0: swapToken0,
+                v2ExactInputs: v2ExactInputs,
+                v3ExactInputSingles: v3ExactInputSingles,
+                v3ExactInputs: v3ExactInputs,
+                otherCalls: otherCalls
+            })
+        );
 
-  // the expected defaults
-  uint256 constant DEADLINE = type(uint256).max;
-  uint256 constant AMOUNT_0_MIN = 0;
-  uint256 constant AMOUNT_1_MIN = 0;
+        RemoveAndSwapDecoder.Params memory params = decoder.decode(data);
 
-  // test-supplied non-default
-  bool constant swapToken0 = false;
-  bool constant swapToken1 = true;
-  uint64 constant deadline = 999;
-  uint256 constant amount0Min = 123;
-  uint256 constant amount1Min = 456;
-
-  function testLength0() public {
-    data = new bytes(0);
-
-    cheats.expectRevert(
-      abi.encodeWithSelector(RemoveAndSwapDecoder.InvalidDataLength.selector, 0)
-    );
-    decoder.decode(data);
-  }
-
-  function testLength1() public {
-    data = new bytes(1);
-
-    data = abi.encodePacked(swapToken0);
-    RemoveAndSwapDecoder.Params memory params = decoder.decode(data);
-    assertEq(params.deadline, DEADLINE);
-    assertEq(params.amount0Min, AMOUNT_0_MIN);
-    assertEq(params.amount0Min, AMOUNT_1_MIN);
-    assertTrue(params.swapToken0);
-
-    data = abi.encodePacked(swapToken1);
-    params = decoder.decode(data);
-    assertEq(params.deadline, DEADLINE);
-    assertEq(params.amount0Min, AMOUNT_0_MIN);
-    assertEq(params.amount0Min, AMOUNT_1_MIN);
-    assertTrue(params.swapToken0 == false);
-  }
-
-  function testLength9() public {
-    data = new bytes(9);
-
-    data = abi.encodePacked(swapToken0, deadline);
-    RemoveAndSwapDecoder.Params memory params = decoder.decode(data);
-    assertEq(params.deadline, deadline);
-    assertEq(params.amount0Min, AMOUNT_0_MIN);
-    assertEq(params.amount0Min, AMOUNT_1_MIN);
-    assertTrue(params.swapToken0);
-  }
+        assertEq(params.deadline, deadline);
+        assertEq(params.recipient, recipient);
+        assertEq(params.amount0Min, amount0Min);
+        assertEq(params.amount1Min, amount1Min);
+        assertTrue(params.swapToken0);
+        assertTrue(swapToken0);
+        assertEq(keccak256(abi.encode(params.v2ExactInputs)), keccak256(abi.encode(v2ExactInputs)));
+        assertEq(keccak256(abi.encode(params.v3ExactInputSingles)), keccak256(abi.encode(v3ExactInputSingles)));
+        assertEq(keccak256(abi.encode(params.v3ExactInputs)), keccak256(abi.encode(v3ExactInputs)));
+        assertEq(keccak256(abi.encode(params.otherCalls)), keccak256(abi.encode(otherCalls)));
+    }
 }

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import 'ds-test/test.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import '../libraries/RemoveAndSwapDecoder.sol';
+import {RemoveAndSwapDecoder} from '../libraries/RemoveAndSwapDecoder.sol';
+
+import {Test} from './utils/Test.sol';
 
 contract Decoder {
     using RemoveAndSwapDecoder for bytes;
@@ -14,10 +15,10 @@ contract Decoder {
     }
 }
 
-contract RemoveAndSwapDecoderTest is DSTest {
+contract RemoveAndSwapDecoderTest is Test {
     Decoder decoder;
 
-    function setUp() public {
+    function setUp() public override {
         decoder = new Decoder();
     }
 

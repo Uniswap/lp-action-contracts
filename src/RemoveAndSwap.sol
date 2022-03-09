@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.12;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {IERC721Receiver} from '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 
-import './interfaces/external/ISwapRouter.sol';
-import './interfaces/external/INonfungiblePositionManager.sol';
-
-import './libraries/SafeApprove.sol';
-import './libraries/SafeTransfer.sol';
-import './libraries/RemoveAndSwapDecoder.sol';
+import {ISwapRouter02} from './interfaces/external/ISwapRouter02.sol';
+import {INonfungiblePositionManager} from './interfaces/external/INonfungiblePositionManager.sol';
+import {SafeApprove} from './libraries/SafeApprove.sol';
+import {SafeTransfer} from './libraries/SafeTransfer.sol';
+import {RemoveAndSwapDecoder} from './libraries/RemoveAndSwapDecoder.sol';
 
 contract RemoveAndSwap is IERC721Receiver {
     error UnsupportedNFT(address caller);
@@ -19,10 +18,10 @@ contract RemoveAndSwap is IERC721Receiver {
     using SafeTransfer for IERC20;
     using RemoveAndSwapDecoder for bytes;
 
-    ISwapRouter immutable swapRouter;
+    ISwapRouter02 immutable swapRouter;
     INonfungiblePositionManager immutable nonfungiblePositionManager;
 
-    constructor(ISwapRouter _swapRouter, INonfungiblePositionManager _nonfungiblePositionManager) {
+    constructor(ISwapRouter02 _swapRouter, INonfungiblePositionManager _nonfungiblePositionManager) {
         swapRouter = _swapRouter;
         nonfungiblePositionManager = _nonfungiblePositionManager;
     }
@@ -108,7 +107,7 @@ contract RemoveAndSwap is IERC721Receiver {
 
             unchecked {
                 swapRouterData[swapRouterDataIndex++] = abi.encodeWithSelector(
-                    ISwapRouter.swapExactTokensForTokens.selector,
+                    ISwapRouter02.swapExactTokensForTokens.selector,
                     amountIn,
                     params.v2ExactInputs[i].amountOutMin,
                     params.v2ExactInputs[i].path,
@@ -127,8 +126,8 @@ contract RemoveAndSwap is IERC721Receiver {
 
             unchecked {
                 swapRouterData[swapRouterDataIndex++] = abi.encodeWithSelector(
-                    ISwapRouter.exactInputSingle.selector,
-                    ISwapRouter.ExactInputSingleParams({
+                    ISwapRouter02.exactInputSingle.selector,
+                    ISwapRouter02.ExactInputSingleParams({
                         tokenIn: address(params.v3ExactInputSingles[i].tokenIn),
                         tokenOut: address(params.v3ExactInputSingles[i].tokenOut),
                         fee: params.v3ExactInputSingles[i].fee,
@@ -151,8 +150,8 @@ contract RemoveAndSwap is IERC721Receiver {
 
             unchecked {
                 swapRouterData[swapRouterDataIndex++] = abi.encodeWithSelector(
-                    ISwapRouter.exactInput.selector,
-                    ISwapRouter.ExactInputParams({
+                    ISwapRouter02.exactInput.selector,
+                    ISwapRouter02.ExactInputParams({
                         path: params.v3ExactInputs[i].path,
                         recipient: params.v3ExactInputs[i].recipient,
                         amountIn: amountIn,

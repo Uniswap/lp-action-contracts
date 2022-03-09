@@ -1,31 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.0;
 
-import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
-import 'ds-test/test.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {IERC721Receiver} from '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 
-import '../interfaces/external/ISwapRouter.sol';
-import '../interfaces/external/INonfungiblePositionManager.sol';
-import '../RemoveAndSwap.sol';
+import {ISwapRouter02} from '../interfaces/external/ISwapRouter02.sol';
+import {INonfungiblePositionManager} from '../interfaces/external/INonfungiblePositionManager.sol';
+import {RemoveAndSwapDecoder} from '../libraries/RemoveAndSwapDecoder.sol';
+import {RemoveAndSwap} from '../RemoveAndSwap.sol';
 
-interface Cheats {
-    function expectRevert(bytes calldata msg) external;
+import {Test} from './utils/Test.sol';
 
-    function prank(address sender) external;
-
-    function mockCall(
-        address where,
-        bytes calldata data,
-        bytes calldata retdata
-    ) external;
-
-    function expectCall(address where, bytes calldata data) external;
-}
-
-contract RemoveAndSwapTest is DSTest {
-    ISwapRouter constant swapRouter = ISwapRouter(0x1111111111111111111111111111111111111111);
+contract RemoveAndSwapMock is Test {
+    ISwapRouter02 constant swapRouter = ISwapRouter02(0x1111111111111111111111111111111111111111);
     INonfungiblePositionManager constant nonfungiblePositionManager =
         INonfungiblePositionManager(0x2222222222222222222222222222222222222222);
+
     IERC20 constant token0 = IERC20(0x3333333333333333333333333333333333333333);
     IERC20 constant token1 = IERC20(0x4444444444444444444444444444444444444444);
     address constant recipient = 0x5555555555555555555555555555555555555555;
@@ -33,14 +23,12 @@ contract RemoveAndSwapTest is DSTest {
     uint256 constant amount0 = 2;
     uint256 constant amount1 = 3;
 
-    Cheats constant cheats = Cheats(HEVM_ADDRESS);
-
     RemoveAndSwapDecoder.Params params;
     bytes removeAndSwapData;
 
     RemoveAndSwap removeAndSwap;
 
-    function setUp() public {
+    function setUp() public override {
         params.recipient = recipient;
         removeAndSwapData = abi.encode(params);
 
@@ -114,10 +102,10 @@ contract RemoveAndSwapTest is DSTest {
 
         cheats.mockCall(
             address(swapRouter),
-            abi.encodeWithSelector(ISwapRouter.multicall.selector),
+            abi.encodeWithSelector(ISwapRouter02.multicall.selector),
             abi.encode(new bytes[](0))
         );
-        cheats.expectCall(address(swapRouter), abi.encodeWithSelector(ISwapRouter.multicall.selector));
+        cheats.expectCall(address(swapRouter), abi.encodeWithSelector(ISwapRouter02.multicall.selector));
     }
 
     function testWorks() public {

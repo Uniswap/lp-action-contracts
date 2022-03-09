@@ -1,9 +1,13 @@
 {
   "scripts": {
+    "postinstall": "node --experimental-json-modules populateConstants.mjs",
     "lint": "prettier --check 'src/**/*.sol'"
   },
   "devDependencies": {
-    "prettier": "^2.5.1",
-    "prettier-plugin-solidity": "^1.0.0-beta.19"
+    "@uniswap/swap-router-contracts": "1.2.0",
+    "@uniswap/v3-core": "1.0.1",
+    "@uniswap/v3-periphery": "1.4.0",
+    "prettier": "2.5.1",
+    "prettier-plugin-solidity": "1.0.0-beta.19"
   }
 }

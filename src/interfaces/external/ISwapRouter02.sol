@@ -31,4 +31,6 @@ interface ISwapRouter02 {
     function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);
 
     function multicall(bytes[] calldata data) external payable returns (bytes[] memory results);
+
+    function factory() external view returns (address);
 }

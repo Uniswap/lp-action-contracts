@@ -11,8 +11,6 @@ abstract contract NonfungiblePositionManagerFixture is UniswapV3FactoryFixture, 
     INonfungiblePositionManager internal nonfungiblePositionManager;
 
     function setUp() public virtual override(UniswapV3FactoryFixture, Test) {
-        UniswapV3FactoryFixture.setUp();
-
         bytes memory creationCodeWithConstructorArguments = bytes.concat(
             NonfungiblePositionManager,
             abi.encode(
@@ -36,7 +34,7 @@ abstract contract NonfungiblePositionManagerFixture is UniswapV3FactoryFixture, 
         nonfungiblePositionManager = INonfungiblePositionManager(nonfungiblePositionManagerAddress);
     }
 
-    function testFactoryAddress() public {
+    function testNonfungiblePositionManagerFactory() public {
         assertEq(nonfungiblePositionManager.factory(), address(factory));
     }
 }

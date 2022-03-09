@@ -76,4 +76,11 @@ interface INonfungiblePositionManager {
             uint256 amount0,
             uint256 amount1
         );
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes calldata data
+    ) external;
 }

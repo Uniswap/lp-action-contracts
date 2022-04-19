@@ -95,6 +95,7 @@ contract RemoveAndSwapIntegration is Test, NonfungiblePositionManagerFixture, Sw
                     amount0Min: 0,
                     amount1Min: 0,
                     swapToken0: true,
+                    swapEntireAmount: true,
                     v2ExactInputs: new RemoveAndSwapDecoder.V2ExactInput[](0),
                     v3ExactInputSingles: v3ExactInputSingles,
                     v3ExactInputs: new RemoveAndSwapDecoder.V3ExactInput[](0),

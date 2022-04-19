@@ -78,16 +78,9 @@ contract RemoveAndSwap is IERC721Receiver {
 
         (uint256 amount0, uint256 amount1) = abi.decode(nonfungiblePositionManagerResults[1], (uint256, uint256));
 
-        // approve the swapRouter for the token to be swapped and transfer the others
         uint256 amount;
         uint256 amountRemaining;
-        if (params.swapToken0) {
-            IERC20(token0).safeApprove(address(swapRouter), amount = amountRemaining = amount0);
-            IERC20(token1).safeTransfer(params.recipient, amount1);
-        } else {
-            IERC20(token0).safeTransfer(params.recipient, amount0);
-            IERC20(token1).safeApprove(address(swapRouter), amount = amountRemaining = amount1);
-        }
+        amountRemaining = amount = (params.swapToken0 ? amount0 : amount1);
 
         bytes[] memory swapRouterData = new bytes[](
             params.v2ExactInputs.length +
@@ -102,7 +95,7 @@ contract RemoveAndSwap is IERC721Receiver {
 
         // encode swapExactTokensForTokens
         for (uint256 i = 0; i < params.v2ExactInputs.length; i++) {
-            uint256 amountIn = swapRouterDataIndex == lastSwapIndex
+            uint256 amountIn = swapRouterDataIndex == lastSwapIndex && params.swapEntireAmount
                 ? amountRemaining
                 : (amount * params.v2ExactInputs[i].amountInBips) / 1e4;
 
@@ -123,7 +116,7 @@ contract RemoveAndSwap is IERC721Receiver {
 
         // encode exactInputSingle
         for (uint256 i = 0; i < params.v3ExactInputSingles.length; i++) {
-            uint256 amountIn = swapRouterDataIndex == lastSwapIndex
+            uint256 amountIn = swapRouterDataIndex == lastSwapIndex && params.swapEntireAmount
                 ? amountRemaining
                 : (amount * params.v3ExactInputSingles[i].amountInBips) / 1e4;
 
@@ -149,7 +142,7 @@ contract RemoveAndSwap is IERC721Receiver {
 
         // encode exactInput
         for (uint256 i = 0; i < params.v3ExactInputs.length; i++) {
-            uint256 amountIn = swapRouterDataIndex == lastSwapIndex
+            uint256 amountIn = swapRouterDataIndex == lastSwapIndex && params.swapEntireAmount
                 ? amountRemaining
                 : (amount * params.v3ExactInputs[i].amountInBips) / 1e4;
 
@@ -176,7 +169,25 @@ contract RemoveAndSwap is IERC721Receiver {
             }
         }
 
+        // approve the swapRouter for the token to be swapped
+        unchecked {
+            IERC20(params.swapToken0 ? token0 : token1).safeApprove(address(swapRouter), amount - amountRemaining);
+        }
+
         swapRouter.multicall(swapRouterData);
+
+        // send the other token to the recipient and optionally any remainder
+        if (params.swapToken0) {
+            IERC20(token1).safeTransfer(params.recipient, amount1);
+            if (amountRemaining > 0) {
+                IERC20(token0).safeTransfer(params.recipient, amountRemaining);
+            }
+        } else {
+            IERC20(token0).safeTransfer(params.recipient, amount0);
+            if (amountRemaining > 0) {
+                IERC20(token1).safeTransfer(params.recipient, amountRemaining);
+            }
+        }
 
         return IERC721Receiver.onERC721Received.selector;
     }

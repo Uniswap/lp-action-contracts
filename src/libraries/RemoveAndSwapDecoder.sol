@@ -40,6 +40,7 @@ library RemoveAndSwapDecoder {
         uint256 amount1Min;
         // parameters relevant to the swap portion
         bool swapToken0;
+        bool swapEntireAmount;
         V2ExactInput[] v2ExactInputs;
         V3ExactInputSingle[] v3ExactInputSingles;
         V3ExactInput[] v3ExactInputs;

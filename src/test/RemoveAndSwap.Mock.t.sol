@@ -30,7 +30,9 @@ contract RemoveAndSwapMock is Test {
 
     function setUp() public override {
         params.recipient = recipient;
-        // this is just so there's no arithmetic underflow when calculating lastSwapIndex
+        // this is so the whole amount gets swapped
+        params.swapEntireAmount = true;
+        // this is so there's no arithmetic underflow when calculating lastSwapIndex
         RemoveAndSwapDecoder.V2ExactInput memory v2ExactInput;
         params.v2ExactInputs.push(v2ExactInput);
         removeAndSwapData = abi.encode(params);

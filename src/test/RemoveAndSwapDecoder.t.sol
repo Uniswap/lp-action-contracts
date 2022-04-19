@@ -28,6 +28,7 @@ contract RemoveAndSwapDecoderTest is Test {
         uint256 amount0Min = 1;
         uint256 amount1Min = 1;
         bool swapToken0 = true;
+        bool swapEntireAmount = true;
         RemoveAndSwapDecoder.V2ExactInput[] memory v2ExactInputs = new RemoveAndSwapDecoder.V2ExactInput[](1);
         address[] memory path = new address[](1);
         path[0] = address(1);
@@ -64,6 +65,7 @@ contract RemoveAndSwapDecoderTest is Test {
                 amount0Min: amount0Min,
                 amount1Min: amount1Min,
                 swapToken0: swapToken0,
+                swapEntireAmount: swapEntireAmount,
                 v2ExactInputs: v2ExactInputs,
                 v3ExactInputSingles: v3ExactInputSingles,
                 v3ExactInputs: v3ExactInputs,

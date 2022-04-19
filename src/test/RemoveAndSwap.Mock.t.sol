@@ -30,6 +30,9 @@ contract RemoveAndSwapMock is Test {
 
     function setUp() public override {
         params.recipient = recipient;
+        // this is just so there's no arithmetic underflow when calculating lastSwapIndex
+        RemoveAndSwapDecoder.V2ExactInput memory v2ExactInput;
+        params.v2ExactInputs.push(v2ExactInput);
         removeAndSwapData = abi.encode(params);
 
         removeAndSwap = new RemoveAndSwap(swapRouter, nonfungiblePositionManager);
@@ -51,14 +54,6 @@ contract RemoveAndSwapMock is Test {
             address(nonfungiblePositionManager),
             abi.encodeCall(INonfungiblePositionManager.positions, (tokenId))
         );
-    }
-
-    function testThrowsNoLiquidity() public {
-        cheats.expectRevert(abi.encodeWithSelector(RemoveAndSwap.NoLiquidity.selector));
-
-        cheats.prank(address(nonfungiblePositionManager));
-        mockPositionsCall(0);
-        removeAndSwap.onERC721Received(address(0), address(0), tokenId, hex'');
     }
 
     function testFailDecode() public {

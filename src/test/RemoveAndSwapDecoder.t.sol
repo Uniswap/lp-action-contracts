@@ -29,8 +29,8 @@ contract RemoveAndSwapDecoderTest is Test {
         uint256 amount1Min = 1;
         bool swapToken0 = true;
         RemoveAndSwapDecoder.V2ExactInput[] memory v2ExactInputs = new RemoveAndSwapDecoder.V2ExactInput[](1);
-        IERC20[] memory path = new IERC20[](1);
-        path[0] = IERC20(address(1));
+        address[] memory path = new address[](1);
+        path[0] = address(1);
         v2ExactInputs[0] = RemoveAndSwapDecoder.V2ExactInput({
             amountInBips: 1,
             amountOutMin: 1,
@@ -40,8 +40,8 @@ contract RemoveAndSwapDecoderTest is Test {
         RemoveAndSwapDecoder.V3ExactInputSingle[]
             memory v3ExactInputSingles = new RemoveAndSwapDecoder.V3ExactInputSingle[](1);
         v3ExactInputSingles[0] = RemoveAndSwapDecoder.V3ExactInputSingle({
-            tokenIn: IERC20(address(1)),
-            tokenOut: IERC20(address(1)),
+            tokenIn: address(1),
+            tokenOut: address(1),
             fee: 1,
             recipient: address(1),
             amountInBips: 1,

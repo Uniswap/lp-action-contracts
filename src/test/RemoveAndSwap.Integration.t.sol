@@ -72,8 +72,8 @@ contract RemoveAndSwapIntegration is Test, NonfungiblePositionManagerFixture, Sw
         RemoveAndSwapDecoder.V3ExactInputSingle[]
             memory v3ExactInputSingles = new RemoveAndSwapDecoder.V3ExactInputSingle[](1);
         v3ExactInputSingles[0] = RemoveAndSwapDecoder.V3ExactInputSingle({
-            tokenIn: token0,
-            tokenOut: token1,
+            tokenIn: address(token0),
+            tokenOut: address(token1),
             fee: 3000,
             recipient: address(this),
             amountInBips: 1e4,

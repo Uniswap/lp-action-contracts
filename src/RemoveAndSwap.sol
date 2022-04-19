@@ -6,17 +6,18 @@ import {IERC721Receiver} from '@openzeppelin/contracts/token/ERC721/IERC721Recei
 
 import {ISwapRouter02} from './interfaces/external/ISwapRouter02.sol';
 import {INonfungiblePositionManager} from './interfaces/external/INonfungiblePositionManager.sol';
+
 import {SafeApprove} from './libraries/SafeApprove.sol';
 import {SafeTransfer} from './libraries/SafeTransfer.sol';
 import {RemoveAndSwapDecoder} from './libraries/RemoveAndSwapDecoder.sol';
 
 contract RemoveAndSwap is IERC721Receiver {
-    error UnsupportedNFT(address caller);
-    error NoLiquidity();
-
     using SafeApprove for IERC20;
     using SafeTransfer for IERC20;
     using RemoveAndSwapDecoder for bytes;
+
+    error NoLiquidity();
+    error UnsupportedNFT(address caller);
 
     ISwapRouter02 immutable swapRouter;
     INonfungiblePositionManager immutable nonfungiblePositionManager;
@@ -26,6 +27,7 @@ contract RemoveAndSwap is IERC721Receiver {
         nonfungiblePositionManager = _nonfungiblePositionManager;
     }
 
+    /// @dev The liquidity of the token must be greater than 0.
     function onERC721Received(
         address,
         address,
@@ -38,8 +40,6 @@ contract RemoveAndSwap is IERC721Receiver {
             tokenId
         );
 
-        if (liquidity == 0) revert NoLiquidity();
-
         RemoveAndSwapDecoder.Params memory params = data.decode();
 
         bytes[] memory nonfungiblePositionManagerData = new bytes[](2);
@@ -50,7 +50,7 @@ contract RemoveAndSwap is IERC721Receiver {
             (
                 INonfungiblePositionManager.DecreaseLiquidityParams({
                     tokenId: tokenId,
-                    liquidity: liquidity,
+                    liquidity: liquidity, // call will fail if liquidity is 0
                     amount0Min: params.amount0Min,
                     amount1Min: params.amount1Min,
                     deadline: params.deadline
@@ -78,15 +78,15 @@ contract RemoveAndSwap is IERC721Receiver {
 
         (uint256 amount0, uint256 amount1) = abi.decode(nonfungiblePositionManagerResults[1], (uint256, uint256));
 
-        // approve the swapRouter for the tokens to be swapped and transfer the others
+        // approve the swapRouter for the token to be swapped and transfer the others
         uint256 amount;
         uint256 amountRemaining;
         if (params.swapToken0) {
             IERC20(token0).safeApprove(address(swapRouter), amount = amountRemaining = amount0);
             IERC20(token1).safeTransfer(params.recipient, amount1);
         } else {
-            IERC20(token1).safeApprove(address(swapRouter), amount = amountRemaining = amount1);
             IERC20(token0).safeTransfer(params.recipient, amount0);
+            IERC20(token1).safeApprove(address(swapRouter), amount = amountRemaining = amount1);
         }
 
         bytes[] memory swapRouterData = new bytes[](
@@ -95,68 +95,77 @@ contract RemoveAndSwap is IERC721Receiver {
                 params.v3ExactInputs.length +
                 params.otherCalls.length
         );
+        // the current index of swapRouterData
         uint256 swapRouterDataIndex;
+        // the index of the last swap in swapRouterData
+        uint256 lastSwapIndex = swapRouterData.length - params.otherCalls.length - 1;
 
         // encode swapExactTokensForTokens
         for (uint256 i = 0; i < params.v2ExactInputs.length; i++) {
-            uint256 amountIn = swapRouterDataIndex == swapRouterData.length - params.otherCalls.length - 1
+            uint256 amountIn = swapRouterDataIndex == lastSwapIndex
                 ? amountRemaining
-                : (params.v2ExactInputs[i].amountInBips * amount) / 1e4;
+                : (amount * params.v2ExactInputs[i].amountInBips) / 1e4;
 
             amountRemaining -= amountIn;
 
             unchecked {
-                swapRouterData[swapRouterDataIndex++] = abi.encodeWithSelector(
-                    ISwapRouter02.swapExactTokensForTokens.selector,
-                    amountIn,
-                    params.v2ExactInputs[i].amountOutMin,
-                    params.v2ExactInputs[i].path,
-                    params.v2ExactInputs[i].to
+                swapRouterData[swapRouterDataIndex++] = abi.encodeCall(
+                    ISwapRouter02.swapExactTokensForTokens,
+                    (
+                        amountIn,
+                        params.v2ExactInputs[i].amountOutMin,
+                        params.v2ExactInputs[i].path,
+                        params.v2ExactInputs[i].to
+                    )
                 );
             }
         }
 
         // encode exactInputSingle
         for (uint256 i = 0; i < params.v3ExactInputSingles.length; i++) {
-            uint256 amountIn = swapRouterDataIndex == swapRouterData.length - params.otherCalls.length - 1
+            uint256 amountIn = swapRouterDataIndex == lastSwapIndex
                 ? amountRemaining
-                : (params.v3ExactInputSingles[i].amountInBips * amount) / 1e4;
+                : (amount * params.v3ExactInputSingles[i].amountInBips) / 1e4;
 
             amountRemaining -= amountIn;
 
             unchecked {
-                swapRouterData[swapRouterDataIndex++] = abi.encodeWithSelector(
-                    ISwapRouter02.exactInputSingle.selector,
-                    ISwapRouter02.ExactInputSingleParams({
-                        tokenIn: address(params.v3ExactInputSingles[i].tokenIn),
-                        tokenOut: address(params.v3ExactInputSingles[i].tokenOut),
-                        fee: params.v3ExactInputSingles[i].fee,
-                        recipient: params.v3ExactInputSingles[i].recipient,
-                        amountIn: amountIn,
-                        amountOutMinimum: params.v3ExactInputSingles[i].amountOutMinimum,
-                        sqrtPriceLimitX96: 0
-                    })
+                swapRouterData[swapRouterDataIndex++] = abi.encodeCall(
+                    ISwapRouter02.exactInputSingle,
+                    (
+                        ISwapRouter02.ExactInputSingleParams({
+                            tokenIn: address(params.v3ExactInputSingles[i].tokenIn),
+                            tokenOut: address(params.v3ExactInputSingles[i].tokenOut),
+                            fee: params.v3ExactInputSingles[i].fee,
+                            recipient: params.v3ExactInputSingles[i].recipient,
+                            amountIn: amountIn,
+                            amountOutMinimum: params.v3ExactInputSingles[i].amountOutMinimum,
+                            sqrtPriceLimitX96: 0
+                        })
+                    )
                 );
             }
         }
 
         // encode exactInput
         for (uint256 i = 0; i < params.v3ExactInputs.length; i++) {
-            uint256 amountIn = swapRouterDataIndex == swapRouterData.length - params.otherCalls.length - 1
+            uint256 amountIn = swapRouterDataIndex == lastSwapIndex
                 ? amountRemaining
-                : (params.v3ExactInputs[i].amountInBips * amount) / 1e4;
+                : (amount * params.v3ExactInputs[i].amountInBips) / 1e4;
 
             amountRemaining -= amountIn;
 
             unchecked {
-                swapRouterData[swapRouterDataIndex++] = abi.encodeWithSelector(
-                    ISwapRouter02.exactInput.selector,
-                    ISwapRouter02.ExactInputParams({
-                        path: params.v3ExactInputs[i].path,
-                        recipient: params.v3ExactInputs[i].recipient,
-                        amountIn: amountIn,
-                        amountOutMinimum: params.v3ExactInputs[i].amountOutMinimum
-                    })
+                swapRouterData[swapRouterDataIndex++] = abi.encodeCall(
+                    ISwapRouter02.exactInput,
+                    (
+                        ISwapRouter02.ExactInputParams({
+                            path: params.v3ExactInputs[i].path,
+                            recipient: params.v3ExactInputs[i].recipient,
+                            amountIn: amountIn,
+                            amountOutMinimum: params.v3ExactInputs[i].amountOutMinimum
+                        })
+                    )
                 );
             }
         }

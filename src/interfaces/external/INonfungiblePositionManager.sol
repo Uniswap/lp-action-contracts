@@ -42,6 +42,8 @@ interface INonfungiblePositionManager {
 
     function collect(CollectParams calldata params) external payable returns (uint256 amount0, uint256 amount1);
 
+    function burn(uint256 tokenId) external payable;
+
     function multicall(bytes[] calldata data) external payable returns (bytes[] memory results);
 
     function factory() external view returns (address);

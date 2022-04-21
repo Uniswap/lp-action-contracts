@@ -42,7 +42,7 @@ contract RemoveAndSwap is IERC721Receiver {
 
         RemoveAndSwapDecoder.Params memory params = data.decode();
 
-        bytes[] memory nonfungiblePositionManagerData = new bytes[](2);
+        bytes[] memory nonfungiblePositionManagerData = new bytes[](3);
 
         // encode decreaseLiquidity
         nonfungiblePositionManagerData[0] = abi.encodeCall(
@@ -70,6 +70,8 @@ contract RemoveAndSwap is IERC721Receiver {
                 })
             )
         );
+
+        nonfungiblePositionManagerData[2] = abi.encodeCall(nonfungiblePositionManager.burn, (tokenId));
 
         // call the nonfungiblePositionManager
         bytes[] memory nonfungiblePositionManagerResults = nonfungiblePositionManager.multicall(

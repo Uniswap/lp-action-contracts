@@ -82,20 +82,31 @@ contract RemoveAndSwap is IERC721Receiver {
         uint256 amountRemaining;
         amountRemaining = amount = (params.swapToken0 ? amount0 : amount1);
 
-        bytes[] memory swapRouterData = new bytes[](
-            params.v2ExactInputs.length +
-                params.v3ExactInputSingles.length +
-                params.v3ExactInputs.length +
-                params.otherCalls.length
-        );
+        bytes[] memory swapRouterData;
+        unchecked {
+            swapRouterData = new bytes[](
+                params.v2ExactInputs.length +
+                    params.v3ExactInputSingles.length +
+                    params.v3ExactInputs.length +
+                    params.otherCalls.length
+            );
+        }
         // the current index of swapRouterData
         uint256 swapRouterDataIndex;
-        // the index of the last swap in swapRouterData
-        uint256 lastSwapIndex = swapRouterData.length - params.otherCalls.length - 1;
+
+        // this is a somehwat fragile hack to save gas - if the user wants to swap the entire amount,
+        // then the last of their swaps needs to ignore accumulated rounding error associated
+        // with using bips, and specify the entire remaining amount. the first part of this
+        // ternary calculates the index of the last swap for that purpose. if not, then the
+        // index is set to an unreachable value, so that the index never matches
+        // and the exact (rounded) swap amounts are used.
+        uint256 lastSwapIndex = params.swapEntireAmount
+            ? swapRouterData.length - params.otherCalls.length - 1
+            : type(uint256).max;
 
         // encode swapExactTokensForTokens
         for (uint256 i = 0; i < params.v2ExactInputs.length; i++) {
-            uint256 amountIn = swapRouterDataIndex == lastSwapIndex && params.swapEntireAmount
+            uint256 amountIn = swapRouterDataIndex == lastSwapIndex
                 ? amountRemaining
                 : (amount * params.v2ExactInputs[i].amountInBips) / 1e4;
 
@@ -116,7 +127,7 @@ contract RemoveAndSwap is IERC721Receiver {
 
         // encode exactInputSingle
         for (uint256 i = 0; i < params.v3ExactInputSingles.length; i++) {
-            uint256 amountIn = swapRouterDataIndex == lastSwapIndex && params.swapEntireAmount
+            uint256 amountIn = swapRouterDataIndex == lastSwapIndex
                 ? amountRemaining
                 : (amount * params.v3ExactInputSingles[i].amountInBips) / 1e4;
 
@@ -142,7 +153,7 @@ contract RemoveAndSwap is IERC721Receiver {
 
         // encode exactInput
         for (uint256 i = 0; i < params.v3ExactInputs.length; i++) {
-            uint256 amountIn = swapRouterDataIndex == lastSwapIndex && params.swapEntireAmount
+            uint256 amountIn = swapRouterDataIndex == lastSwapIndex
                 ? amountRemaining
                 : (amount * params.v3ExactInputs[i].amountInBips) / 1e4;
 

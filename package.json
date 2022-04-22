@@ -9,7 +9,7 @@
   "devDependencies": {
     "@uniswap/swap-router-contracts": "1.2.0",
     "@uniswap/v3-core": "1.0.1",
-    "@uniswap/v3-periphery": "1.4.0",
+    "@uniswap/v3-periphery": "1.4.1",
     "prettier": "2.5.1",
     "prettier-plugin-solidity": "1.0.0-beta.19"
   }

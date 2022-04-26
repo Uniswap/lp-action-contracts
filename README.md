@@ -6,5 +6,5 @@ This repository contains code to facilitate removing liquidity from Uniswap V3 v
 
 - Ensure that [foundry](https://github.com/gakonst/foundry) is installed on your machine
 - `yarn`
-- `forge build`
-- `forge test`
+- `yarn compile`
+- `yarn test`

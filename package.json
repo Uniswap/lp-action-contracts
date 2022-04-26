@@ -17,9 +17,11 @@
     "node": "16"
   },
   "scripts": {
-    "postinstall": "node --experimental-json-modules populateConstants.mjs",
-    "prepack": "forge build",
-    "lint": "prettier --check 'src/**/*.sol'"
+    "compile": "forge build",
+    "pretest": "node --experimental-json-modules populateConstants.mjs",
+    "test": "forge test",
+    "lint": "prettier --check 'src/**/*.sol'",
+    "prepack": "yarn compile"
   },
   "devDependencies": {
     "@uniswap/swap-router-contracts": "1.2.0",

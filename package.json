@@ -1,9 +1,24 @@
 {
+  "name": "@uniswap/lp-action-contracts",
+  "description": "Smart contracts that enable additional functionality for Uniswap V3 position NFTs",
+  "license": "GPL-3.0-or-later",
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "1.0.0-rc.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Uniswap/lp-action-contracts"
+  },
+  "files": [
+    "out/RemoveAndSwapDecoder.sol"
+  ],
   "engines": {
     "node": "16"
   },
   "scripts": {
     "postinstall": "node --experimental-json-modules populateConstants.mjs",
+    "prepack": "forge build",
     "lint": "prettier --check 'src/**/*.sol'"
   },
   "devDependencies": {

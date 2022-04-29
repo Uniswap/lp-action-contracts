@@ -96,7 +96,7 @@ contract RemoveAndSwap is IERC721Receiver {
         // the current index of swapRouterData
         uint256 swapRouterDataIndex;
 
-        // this is a somehwat fragile hack to save gas - if the user wants to swap the entire amount,
+        // this is a somewhat fragile hack to save gas - if the user wants to swap the entire amount,
         // then the last of their swaps needs to ignore accumulated rounding error associated
         // with using bips, and specify the entire remaining amount. the first part of this
         // ternary calculates the index of the last swap for that purpose. if not, then the

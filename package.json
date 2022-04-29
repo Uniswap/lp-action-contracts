@@ -11,7 +11,7 @@
     "url": "https://github.com/Uniswap/lp-action-contracts"
   },
   "files": [
-    "out/RemoveAndSwapDecoder.sol"
+    "out/RemoveAndSwap.sol"
   ],
   "engines": {
     "node": "16"

@@ -16,7 +16,6 @@ contract RemoveAndSwap is IERC721Receiver {
     using SafeTransfer for IERC20;
     using RemoveAndSwapDecoder for bytes;
 
-    error NoLiquidity();
     error UnsupportedNFT(address caller);
 
     ISwapRouter02 immutable swapRouter;
